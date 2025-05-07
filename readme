@@ -1,0 +1,2 @@
+Api link for the registering face: http://127.0.0.1:5000/api/register_face?name=Santosh 
+APi link for the predicting face: http://127.0.0.1:5000/api/predict_face
