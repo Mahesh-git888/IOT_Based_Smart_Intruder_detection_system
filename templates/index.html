@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Face Recognition Portal</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 2rem; background: #fafafa; }
+    h2 { color: #333; }
+    button { padding: 12px 24px; font-size: 1rem; margin: 20px; }
+    img { margin-top: 20px; width: 400px; border: 4px solid #333; }
+    #status { font-size: 1.2rem; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Real-Time Face Recognition</h2>
+  <button onclick="detectFace()">Scan Face</button>
+  <div id="status"></div>
+  <div id="result"></div>
+
+  <script>
+    async function detectFace() {
+      document.getElementById("status").innerText = "Detecting face, please wait...";
+      document.getElementById("result").innerHTML = "";
+
+      const response = await fetch("/api/predict_face", { method: "POST" });
+      const data = await response.json();
+
+      const msg = `Detected: ${data.name} (${data.label})`;
+      const imageURL = "/static/" + data.image_path;
+
+      document.getElementById("status").innerText = msg;
+      document.getElementById("result").innerHTML = `<img src="${imageURL}" alt="Face Image">`;
+    }
+  </script>
+</body>
+</html>
