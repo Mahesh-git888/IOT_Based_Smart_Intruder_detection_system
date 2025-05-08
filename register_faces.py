@@ -1,10 +1,10 @@
 import face_recognition
 import cv2
-import pickle
-import os
+from db_helper import DatabaseHelper
 
 def register_faces(name):
     video_capture = cv2.VideoCapture(0)
+    db_helper = DatabaseHelper()
 
     print("[INFO] Capturing image. Please look at the camera...")
 
@@ -23,34 +23,14 @@ def register_faces(name):
 
         if len(face_encodings) == 0:
             print("[ERROR] No face detected. Please look at the camera.")
-            continue  # Continue the loop if no face is detected
+            continue
 
         if len(face_encodings) > 1:
             print("[ERROR] Multiple faces detected. Please ensure only one face is visible.")
-            continue  # Continue the loop if multiple faces are detected
+            continue
 
-        # If only one face is detected, save the encoding
-        print("[INFO] Face detected. Registering...")
-
-        # Load existing encodings if they exist
-        if os.path.exists("encodings.pickle"):
-            with open("encodings.pickle", "rb") as f:
-                existing_data = pickle.load(f)
-            existing_encodings = existing_data["encodings"]
-            existing_names = existing_data["names"]
-        else:
-            existing_encodings = []
-            existing_names = []
-
-        # Append the new face encoding and name
-        existing_encodings.append(face_encodings[0])
-        existing_names.append(name)
-
-        # Save updated data
-        data = {"encodings": existing_encodings, "names": existing_names}
-        with open("encodings.pickle", "wb") as f:
-            pickle.dump(data, f)
-
+        # Save face encoding to MongoDB
+        db_helper.save_face_encoding(face_encodings[0], name)
         print(f"[INFO] Face registered for {name}")
         video_capture.release()
 

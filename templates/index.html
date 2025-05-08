@@ -14,8 +14,13 @@
 <body>
   <h2>Real-Time Face Recognition</h2>
   <button onclick="detectFace()">Scan Face</button>
+  <button onclick="clearData()" style="background-color: #ff4444; color: white;">Clear All Data</button>
   <div id="status"></div>
   <div id="result"></div>
+  <div id="userHistory">
+    <h3>Visit History</h3>
+    <div id="historyContent"></div>
+  </div>
 
   <script>
     async function detectFace() {
@@ -25,11 +30,55 @@
       const response = await fetch("/api/predict_face", { method: "POST" });
       const data = await response.json();
 
-      const msg = `Detected: ${data.name} (${data.label})`;
-      const imageURL = "/static/" + data.image_path;
+      if (data.status === 'success') {
+        const msg = `Detected: ${data.name} (${data.label})`;
+        const imageURL = data.image_path;  // Use the full path returned by the API
 
-      document.getElementById("status").innerText = msg;
-      document.getElementById("result").innerHTML = `<img src="${imageURL}" alt="Face Image">`;
+        document.getElementById("status").innerText = msg;
+        document.getElementById("result").innerHTML = `<img src="${imageURL}" alt="Face Image">`;
+        
+        if (data.name !== 'Unknown') {
+          await showUserHistory(data.name);
+        }
+      }
+    }
+
+    async function clearData() {
+      if (confirm("Are you sure? This will delete all registered faces and stored images.")) {
+        try {
+          document.getElementById("status").innerText = "Clearing data...";
+          const response = await fetch("/api/clear_data", { method: "POST" });
+          const data = await response.json();
+          document.getElementById("status").innerText = data.message;
+          document.getElementById("result").innerHTML = "";
+        } catch (error) {
+          document.getElementById("status").innerText = "Error clearing data: " + error;
+        }
+      }
+    }
+
+    async function showUserHistory(name) {
+      try {
+        const response = await fetch(`/api/user_history/${name}`);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          const history = data.data;
+          const historyHtml = `
+            <p>User: ${history.name}</p>
+            <p>Total Visits: ${history.visit_count}</p>
+            <p>Recent Visits:</p>
+            <ul>
+              ${history.timestamps.slice(-5).map(ts => 
+                `<li>${ts}</li>`
+              ).join('')}
+            </ul>
+          `;
+          document.getElementById('historyContent').innerHTML = historyHtml;
+        }
+      } catch (error) {
+        console.error('Error fetching user history:', error);
+      }
     }
   </script>
 </body>
