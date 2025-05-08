@@ -32,71 +32,43 @@ def send_alert_sms():
         print(f"Error sending SMS: {e}")
         return False
 
-def log_entry(face_label):
-    try:
-        # Use absolute path in current directory
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        log_file = os.path.join(current_dir, 'door_access_log.csv')
+# def log_entry(face_label):
+#     try:
+#         # Use absolute path in current directory
+#         current_dir = os.path.dirname(os.path.abspath(__file__))
+#         log_file = os.path.join(current_dir, 'door_access_log.csv')
         
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        new_entry = pd.DataFrame({
-            'timestamp': [timestamp],
-            'face_label': [face_label],
-            'status': ['Door Opened']
-        })
+#         new_entry = pd.DataFrame({
+#             'timestamp': [timestamp],
+#             'face_label': [face_label],
+#             'status': ['Door Opened']
+#         })
         
-        try:
-            # Check if file is writable
-            if os.path.exists(log_file):
-                with open(log_file, 'a'):
-                    pass
+#         try:
+#             # Check if file is writable
+#             if os.path.exists(log_file):
+#                 with open(log_file, 'a'):
+#                     pass
             
-            # Append to existing file or create new one
-            if os.path.exists(log_file):
-                new_entry.to_csv(log_file, mode='a', header=False, index=False)
-            else:
-                new_entry.to_csv(log_file, index=False)
+#             # Append to existing file or create new one
+#             if os.path.exists(log_file):
+#                 new_entry.to_csv(log_file, mode='a', header=False, index=False)
+#             else:
+#                 new_entry.to_csv(log_file, index=False)
             
-            print(f"Log entry created for {face_label} at {timestamp}")
-            return True
+#             print(f"Log entry created for {face_label} at {timestamp}")
+#             return True
             
-        except PermissionError:
-            print(f"Permission denied. Please check file permissions for: {log_file}")
-            print("Try running VS Code as administrator")
-            return False
+#         except PermissionError:
+#             print(f"Permission denied. Please check file permissions for: {log_file}")
+#             print("Try running VS Code as administrator")
+#             return False
             
-    except Exception as e:
-        print(f"Error creating log entry: {str(e)}")
-        return False
-
-def process_door_access():
-    while True:
-        try:
-            status = input("Enter door status (0: Closed/Alert, 1: Opened) or 'q' to quit: ")
-            
-            if status.lower() == 'q':
-                print("Exiting program...")
-                break
-            
-            status = int(status)
-            
-            if status == 0:
-                # Door closed - send alert
-                send_alert_sms()
-                print("Door closed - Alert sent")
-            
-            elif status == 1:
-                # Door opened - log entry
-                face_label = input("Enter person name/face label: ")
-                log_entry(face_label)
-                print("Door opened - Access logged")
-            
-            else:
-                print("Please enter only 0 or 1")
-                
-        except ValueError:
-            print("Invalid input! Please enter 0 or 1")
+#     except Exception as e:
+#         print(f"Error creating log entry: {str(e)}")
+#         return False
 
 if __name__ == "__main__":
     process_door_access()
