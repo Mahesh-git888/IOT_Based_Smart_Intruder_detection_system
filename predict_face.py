@@ -1,11 +1,10 @@
 import face_recognition
 import cv2
-import pickle
 import numpy as np
 from datetime import datetime
-import shutil
 import os
 from db_helper import DatabaseHelper
+from sms import send_alert_sms
 
 def predict_faces():
     url = 0
@@ -20,6 +19,8 @@ def predict_faces():
         if ret:
             image_name = db_helper.save_image(frame, "Unknown")
             video_capture.release()
+            # Send SMS alert for unknown person
+            send_alert_sms()
             return "Unknown", image_name
         video_capture.release()
         return "Unknown", None
@@ -69,6 +70,11 @@ def predict_faces():
             # Save image using database helper only
             image_name = db_helper.save_image(frame, name)
             print(f"[INFO] Image saved to database")
+            
+            # If the face is unknown, send an SMS alert
+            if name == "Unknown":
+                print("[ALERT] Unknown person detected! Sending SMS alert...")
+                send_alert_sms()
 
             return name, image_name
 
