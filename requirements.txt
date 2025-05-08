@@ -7,4 +7,6 @@ flask-cors
 dotenv
 pymongo
 pillow
+twilio
+pandas
 
