@@ -83,13 +83,11 @@ def login_page():
 
 # Example protected API route
 @app.route('/api/protected', methods=['GET'])
-@token_required
 def protected():
     return jsonify({"status": "success", "message": "You have access to this protected route!"})
 
 
 @app.route('/api/register_face', methods=['GET'])
-@token_required
 def register():
     # Get the 'name' from the query parameters
     name = request.args.get('name')
@@ -102,7 +100,6 @@ def register():
     
     
 @app.route('/api/predict_face', methods=['POST'])
-@token_required
 def predict():
     try:
         name, image_name = predict_faces()
@@ -125,9 +122,23 @@ def predict():
             "message": str(e)
         }), 500
 
-# Add this route to serve images directly from MongoDB if needed
+@app.route('/api/predict_face_simple', methods=['GET'])
+def predict_face_simple():
+    try:
+        name, _ = predict_faces()
+        # Return 1 if recognized (safe), 0 if unknown (unsafe)
+        result = 1 if name != "Unknown" else 0
+        return jsonify({
+            "result": result,
+            "name": name
+        })
+    except Exception as e:
+        return jsonify({
+            "result": -1,  # Error code
+            "error": str(e)
+        }), 500
+
 @app.route('/api/image/<image_name>')
-@token_required
 def get_image(image_name):
     db_helper = DatabaseHelper()
     image_data = db_helper.get_image(image_name)
@@ -139,7 +150,6 @@ def get_image(image_name):
     return jsonify({"error": "Image not found"}), 404
 
 @app.route('/api/clear_data', methods=['POST'])
-@token_required
 def clear_data():
     try:
         db_helper = DatabaseHelper()
@@ -149,7 +159,6 @@ def clear_data():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/user_history/<name>', methods=['GET'])
-@token_required
 def get_user_history(name):
     db_helper = DatabaseHelper()
     history = db_helper.get_user_history(name)
@@ -168,7 +177,6 @@ def get_user_history(name):
     
 ## For opening the gate
 @app.route('/api/open_gate', methods=['POST']) 
-@token_required
 def open_gate():
     return jsonify({
             "status": "success",

@@ -7,7 +7,7 @@ from db_helper import DatabaseHelper
 from sms import send_alert_sms
 
 def predict_faces():
-    url = 0
+    url = "http://192.168.168.80:8080/video"
     db_helper = DatabaseHelper()
     
     # Get encodings from MongoDB
