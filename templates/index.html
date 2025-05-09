@@ -9,39 +9,86 @@
     button { padding: 12px 24px; font-size: 1rem; margin: 20px; }
     img { margin-top: 20px; width: 400px; border: 4px solid #333; }
     #status { font-size: 1.2rem; margin-top: 20px; }
+    table { margin: 20px auto; border-collapse: collapse; width: 80%; }
+    table, th, td { border: 1px solid #ddd; }
+    th, td { padding: 10px; text-align: center; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
   <h2>Real-Time Face Recognition</h2>
   <button onclick="detectFace()">Scan Face</button>
   <button onclick="clearData()" style="background-color: #ff4444; color: white;">Clear All Data</button>
+  <button onclick="openGate()" style="background-color: #4CAF50; color: white;">Open Gate</button>
+  <button id="logoutButton" style="background-color: #ff4444; color: white; padding: 10px 20px; font-size: 1rem;">Logout</button>
   <div id="status"></div>
   <div id="result"></div>
   <div id="userHistory">
     <h3>Visit History</h3>
-    <div id="historyContent"></div>
+    <button id="toggleHistoryBtn" onclick="toggleHistory()">View History</button>
+    <table id="historyTable" class="hidden">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Total Visits</th>
+          <th>Recent Visit (Timestamp)</th>
+        </tr>
+      </thead>
+      <tbody id="historyContent"></tbody>
+    </table>
   </div>
 
   <script>
-    async function detectFace() {
-      document.getElementById("status").innerText = "Detecting face, please wait...";
-      document.getElementById("result").innerHTML = "";
 
-      const response = await fetch("/api/predict_face", { method: "POST" });
-      const data = await response.json();
-
-      if (data.status === 'success') {
-        const msg = `Detected: ${data.name} (${data.label})`;
-        const imageURL = data.image_path;  // Use the full path returned by the API
-
-        document.getElementById("status").innerText = msg;
-        document.getElementById("result").innerHTML = `<img src="${imageURL}" alt="Face Image">`;
-        
-        if (data.name !== 'Unknown') {
-          await showUserHistory(data.name);
-        }
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const response = await fetch("/api/protected", { method: "GET" });
+      if (response.status === 403) {
+        alert("Unauthorized! Redirecting to login page.");
+        window.location.href = "/login";
       }
+    } catch (error) {
+      console.error("Error checking authentication:", error);
+      alert("Unauthorized! Redirecting to login page.");
+      window.location.href = "/login";
     }
+  });
+  async function detectFace() {
+  document.getElementById("status").innerText = "Detecting face, please wait...";
+  document.getElementById("result").innerHTML = "";
+
+  try {
+    const response = await fetch("/api/predict_face", {
+      method: "POST",
+      credentials: "include", // Include cookies in the request
+    });
+
+    if (response.status === 403) {
+      alert("Unauthorized! Redirecting to login page.");
+      window.location.href = "/login";
+      return;
+    }
+
+    const data = await response.json();
+
+    if (data.status === "success") {
+      const msg = `Detected: ${data.name} (${data.label})`;
+      const imageURL = data.image_path;
+
+      document.getElementById("status").innerText = msg;
+      document.getElementById("result").innerHTML = `<img src="${imageURL}" alt="Face Image">`;
+
+      if (data.name !== "Unknown") {
+        await showUserHistory(data.name);
+      }
+    } else {
+      document.getElementById("status").innerText = data.message;
+    }
+  } catch (error) {
+    document.getElementById("status").innerText = "Error detecting face. Please try again.";
+    console.error("Error:", error);
+  }
+}
 
     async function clearData() {
       if (confirm("Are you sure? This will delete all registered faces and stored images.")) {
@@ -64,22 +111,64 @@
         
         if (data.status === 'success') {
           const history = data.data;
-          const historyHtml = `
-            <p>User: ${history.name}</p>
-            <p>Total Visits: ${history.visit_count}</p>
-            <p>Recent Visits:</p>
-            <ul>
-              ${history.timestamps.slice(-5).map(ts => 
-                `<li>${ts}</li>`
-              ).join('')}
-            </ul>
-          `;
+          const historyHtml = history.timestamps.map(ts => `
+            <tr>
+              <td>${history.name}</td>
+              <td>${history.visit_count}</td>
+              <td>${new Date(ts).toLocaleString()}</td>
+            </tr>
+          `).join('');
           document.getElementById('historyContent').innerHTML = historyHtml;
         }
       } catch (error) {
         console.error('Error fetching user history:', error);
       }
     }
+
+    function toggleHistory() {
+      const historyTable = document.getElementById("historyTable");
+      const toggleButton = document.getElementById("toggleHistoryBtn");
+
+      if (historyTable.classList.contains("hidden")) {
+        historyTable.classList.remove("hidden");
+        toggleButton.textContent = "Hide History";
+      } else {
+        historyTable.classList.add("hidden");
+        toggleButton.textContent = "View History";
+      }
+    }
+
+    async function openGate() {
+      try {
+        document.getElementById("status").innerText = "Opening gate...";
+        const response = await fetch("/api/open_gate", { method: "POST" });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          document.getElementById("status").innerText = "Gate opened successfully!";
+        } else {
+          document.getElementById("status").innerText = "Failed to open gate: " + data.message;
+        }
+      } catch (error) {
+        document.getElementById("status").innerText = "Error opening gate: " + error;
+      }
+    }
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+    try {
+      // Call the logout endpoint to clear the cookie
+      const response = await fetch("/api/logout", { method: "POST", credentials: "include" });
+      if (response.status === 200) {
+        alert("You have been logged out.");
+        window.location.href = "/login"; // Redirect to the login page
+      } else {
+        alert("Failed to log out. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error logging out:", error);
+      alert("An error occurred while logging out.");
+    }
+  });
   </script>
 </body>
 </html>
