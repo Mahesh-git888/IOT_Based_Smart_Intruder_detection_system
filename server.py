@@ -1,11 +1,9 @@
 import io
-from flask import Flask, render_template, request, jsonify, send_file, redirect
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
 from flask_cors import CORS
-import jwt
 import datetime
 import os
 from dotenv import load_dotenv
-from functools import wraps
 import smtplib
 
 # Local functions import
@@ -13,38 +11,18 @@ from predict_face import predict_faces
 from register_faces import register_faces
 from db_helper import DatabaseHelper
 
-
-
-
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
-app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "your_secret_key")  # Replace with a strong secret key
-
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "your_secret_key")  # Still keep secret key for other functionality
 
 # Admin credentials
 ADMIN_CREDENTIALS = {
     "username": "admin",
     "password": "admin123"
 }
-
-# JWT token validation decorator
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = request.cookies.get('jwtToken')  # Retrieve the token from cookies
-        if not token:
-            return jsonify({"status": "error", "message": "Token is missing"}), 403
-        try:
-            jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-        except jwt.ExpiredSignatureError:
-            return jsonify({"status": "error", "message": "Token has expired"}), 403
-        except jwt.InvalidTokenError:
-            return jsonify({"status": "error", "message": "Invalid token"}), 403
-        return f(*args, **kwargs)
-    return decorated
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -53,38 +31,28 @@ def login():
     password = data.get("password")
 
     if username == ADMIN_CREDENTIALS["username"] and password == ADMIN_CREDENTIALS["password"]:
-        token = jwt.encode(
-            {"username": username, "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
-            app.config['SECRET_KEY'],
-            algorithm="HS256"
-        )
-        response = jsonify({"status": "success", "message": "Login successful"})
-        response.set_cookie('jwtToken', token, httponly=True)  # Set the token as an HTTP-only cookie
-        return response
+        # Return a success response with the redirect URL to index.html
+        return jsonify({
+            "status": "success", 
+            "message": "Login successful",
+            "redirect": "/dashboard"  # This route serves index.html
+        })
     return jsonify({"status": "error", "message": "Invalid username or password"}), 401
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('index.html')  # This serves the main application page
+
 # Main page route
 @app.route('/')
 def index():
-    token = request.cookies.get('jwtToken')  # Retrieve the token from cookies
-    if not token:
-        return redirect('/login')  # Redirect to login page if no token is found
-    try:
-        jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-        return render_template('index.html')  # Render the main page if the token is valid
-    except jwt.ExpiredSignatureError:
-        return redirect('/login')  # Redirect to login if the token has expired
-    except jwt.InvalidTokenError:
-        return redirect('/login')  # Redirect to login if the token is invalid
+    # Redirect to login route
+    return redirect(url_for('login_page'))
 
 # Login page route
 @app.route('/login')
 def login_page():
     return render_template('login.html')
-
-# Example protected API route
-@app.route('/api/protected', methods=['GET'])
-def protected():
-    return jsonify({"status": "success", "message": "You have access to this protected route!"})
 
 
 @app.route('/api/register_face', methods=['GET'])
@@ -98,7 +66,6 @@ def register():
     else:
         return jsonify({"status": "error", "message": "Name parameter is missing"})
     
-    
 @app.route('/api/predict_face', methods=['POST'])
 def predict():
     try:
@@ -108,7 +75,6 @@ def predict():
                 "status": "error",
                 "message": "Failed to capture image"
             }), 500
-            
         label = "safe" if name != "Unknown" else "Intruder"
         return jsonify({
             "status": "success",
@@ -175,8 +141,7 @@ def get_user_history(name):
         'message': 'User not found'
     }), 404
     
-## For opening the gate
-@app.route('/api/open_gate', methods=['POST']) 
+@app.route('/api/open_gate', methods=['POST'])
 def open_gate():
     return jsonify({
             "status": "success",
@@ -187,9 +152,8 @@ def open_gate():
 @app.route('/api/logout', methods=['POST'])
 def logout():
     response = jsonify({"status": "success", "message": "Logged out successfully"})
-    response.set_cookie('jwtToken', '', expires=0)  # Clear the JWT token cookie
+    # No need to clear JWT token cookie as it's not being used
     return response
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
-

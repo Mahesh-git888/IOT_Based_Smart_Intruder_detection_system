@@ -2,93 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Face Recognition Portal</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 2rem; background: #fafafa; }
-    h2 { color: #333; }
-    button { padding: 12px 24px; font-size: 1rem; margin: 20px; }
-    img { margin-top: 20px; width: 400px; border: 4px solid #333; }
-    #status { font-size: 1.2rem; margin-top: 20px; }
-    table { margin: 20px auto; border-collapse: collapse; width: 80%; }
-    table, th, td { border: 1px solid #ddd; }
-    th, td { padding: 10px; text-align: center; }
-    .hidden { display: none; }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <h2>Real-Time Face Recognition</h2>
-  <button onclick="detectFace()">Scan Face</button>
-  <button onclick="clearData()" style="background-color: #ff4444; color: white;">Clear All Data</button>
-  <button onclick="openGate()" style="background-color: #4CAF50; color: white;">Open Gate</button>
-  <button id="logoutButton" style="background-color: #ff4444; color: white; padding: 10px 20px; font-size: 1rem;">Logout</button>
-  <div id="status"></div>
-  <div id="result"></div>
-  <div id="userHistory">
-    <h3>Visit History</h3>
-    <button id="toggleHistoryBtn" onclick="toggleHistory()">View History</button>
-    <table id="historyTable" class="hidden">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Total Visits</th>
-          <th>Recent Visit (Timestamp)</th>
-        </tr>
-      </thead>
-      <tbody id="historyContent"></tbody>
-    </table>
+  <nav class="navbar">
+    <div class="navbar-title">Face Recognition System</div>
+    <div class="navbar-actions">
+      <button id="logoutButton" class="btn btn-danger">Logout</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h2>Real-Time Face Recognition</h2>
+      <div class="actions-container">
+        <button class="btn btn-primary" onclick="detectFace()">Scan Face</button>
+        <button class="btn btn-danger" onclick="clearData()">Clear All Data</button>
+        <button class="btn btn-success" onclick="openGate()">Open Gate</button>
+      </div>
+      <div id="status" class="status-area"></div>
+      <div id="result"></div>
+    </div>
+
+    <div class="card">
+      <h3>Register New Face</h3>
+      <!-- Remove any potential form action attribute completely -->
+      <form id="registerFaceForm" onsubmit="registerFace(event)">
+        <div class="form-group">
+          <label for="faceName">Person's Name</label>
+          <input type="text" id="faceName" name="faceName" required placeholder="Enter name">
+        </div>
+        <button type="submit" class="btn btn-primary">Register Face</button>
+      </form>
+      <div id="registerStatus" class="status-area hidden"></div>
+    </div>
+
+    <div class="card" id="userHistory">
+      <h3>Visit History</h3>
+      <button id="toggleHistoryBtn" onclick="toggleHistory()" class="btn btn-primary">View History</button>
+      <table id="historyTable" class="hidden">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Total Visits</th>
+            <th>Recent Visit (Timestamp)</th>
+          </tr>
+        </thead>
+        <tbody id="historyContent"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add toast container -->
+  <div id="toastContainer" class="toast-container hidden">
+    <div class="toast-message">
+      <span id="toastText"></span>
+      <button class="toast-close" onclick="closeToast()">×</button>
+    </div>
   </div>
 
   <script>
-
-document.addEventListener("DOMContentLoaded", async () => {
-    try {
-      const response = await fetch("/api/protected", { method: "GET" });
-      if (response.status === 403) {
-        alert("Unauthorized! Redirecting to login page.");
-        window.location.href = "/login";
-      }
-    } catch (error) {
-      console.error("Error checking authentication:", error);
-      alert("Unauthorized! Redirecting to login page.");
-      window.location.href = "/login";
-    }
-  });
-  async function detectFace() {
-  document.getElementById("status").innerText = "Detecting face, please wait...";
-  document.getElementById("result").innerHTML = "";
-
-  try {
-    const response = await fetch("/api/predict_face", {
-      method: "POST",
-      credentials: "include", // Include cookies in the request
-    });
-
-    if (response.status === 403) {
-      alert("Unauthorized! Redirecting to login page.");
-      window.location.href = "/login";
-      return;
-    }
-
-    const data = await response.json();
-
-    if (data.status === "success") {
-      const msg = `Detected: ${data.name} (${data.label})`;
-      const imageURL = data.image_path;
-
-      document.getElementById("status").innerText = msg;
-      document.getElementById("result").innerHTML = `<img src="${imageURL}" alt="Face Image">`;
-
-      if (data.name !== "Unknown") {
-        await showUserHistory(data.name);
-      }
+    // Theme Toggle Functionality
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    
+    // Check for saved theme preference or default to light mode
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-theme');
+      themeIcon.textContent = '☀️';
     } else {
-      document.getElementById("status").innerText = data.message;
+      themeIcon.textContent = '🌙';
     }
-  } catch (error) {
-    document.getElementById("status").innerText = "Error detecting face. Please try again.";
-    console.error("Error:", error);
-  }
-}
+    
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          const response = await fetch("/api/protected", { method: "GET" });
+          if (response.status === 403) {
+            alert("Unauthorized! Redirecting to login page.");
+            window.location.href = "/login";
+          }
+        } catch (error) {
+          console.error("Error checking authentication:", error);
+          alert("Unauthorized! Redirecting to login page.");
+          window.location.href = "/login";
+        }
+      });
+      
+    async function detectFace() {
+      document.getElementById("status").innerText = "Detecting face, please wait...";
+      document.getElementById("result").innerHTML = "";
+
+      try {
+        const response = await fetch("/api/predict_face", {
+          method: "POST",
+          credentials: "include", // Include cookies in the request
+        });
+
+        if (response.status === 403) {
+          alert("Unauthorized! Redirecting to login page.");
+          window.location.href = "/login";
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.status === "success") {
+          const msg = `Detected: ${data.name} (${data.label})`;
+          const imageURL = data.image_path;
+
+          document.getElementById("status").innerText = msg;
+          document.getElementById("result").innerHTML = `<img src="${imageURL}" alt="Face Image" class="result-image fade-in">`;
+
+          if (data.name !== "Unknown") {
+            await showUserHistory(data.name);
+          }
+        } else {
+          document.getElementById("status").innerText = data.message;
+        }
+      } catch (error) {
+        document.getElementById("status").innerText = "Error detecting face. Please try again.";
+        console.error("Error:", error);
+      }
+    }
 
     async function clearData() {
       if (confirm("Are you sure? This will delete all registered faces and stored images.")) {
@@ -119,6 +157,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             </tr>
           `).join('');
           document.getElementById('historyContent').innerHTML = historyHtml;
+          
+          // Show history table automatically
+          document.getElementById('historyTable').classList.remove("hidden");
+          document.getElementById('toggleHistoryBtn').textContent = "Hide History";
         }
       } catch (error) {
         console.error('Error fetching user history:', error);
@@ -155,20 +197,84 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     document.getElementById("logoutButton").addEventListener("click", async () => {
-    try {
-      // Call the logout endpoint to clear the cookie
-      const response = await fetch("/api/logout", { method: "POST", credentials: "include" });
-      if (response.status === 200) {
-        alert("You have been logged out.");
-        window.location.href = "/login"; // Redirect to the login page
-      } else {
-        alert("Failed to log out. Please try again.");
+      try {
+        // Call the logout endpoint to clear the cookie
+        const response = await fetch("/api/logout", { method: "POST", credentials: "include" });
+        if (response.status === 200) {
+          alert("You have been logged out.");
+          window.location.href = "/login"; // Redirect to the login page
+        } else {
+          alert("Failed to log out. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error logging out:", error);
+        alert("An error occurred while logging out.");
       }
-    } catch (error) {
-      console.error("Error logging out:", error);
-      alert("An error occurred while logging out.");
+    });
+
+    async function registerFace(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('faceName').value;
+      const statusArea = document.getElementById('registerStatus');
+      
+      if (!name) {
+        showToast('Please enter a name', 'error');
+        return;
+      }
+      
+      statusArea.textContent = 'Starting face registration. Please look at the camera...';
+      statusArea.classList.remove('hidden');
+      
+      try {
+        // Make sure we're using the correct API endpoint
+        const response = await fetch(`/api/register_face?name=${encodeURIComponent(name)}`, {
+          method: 'GET'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          showToast(`Success: ${data.message}`, 'success');
+          // Clear the input field
+          document.getElementById('faceName').value = '';
+          // Hide the status area after success
+          setTimeout(() => {
+            statusArea.classList.add('hidden');
+          }, 3000);
+        } else {
+          showToast(`Error: ${data.message || 'Failed to register face.'}`, 'error');
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        showToast('An error occurred during registration. Please try again.', 'error');
+      }
     }
-  });
+
+    // Toast functions
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toastContainer');
+      const toastText = document.getElementById('toastText');
+      
+      // Set message
+      toastText.textContent = message;
+      
+      // Add appropriate class for styling
+      toast.className = 'toast-container toast-' + type;
+      
+      // Show the toast
+      toast.classList.remove('hidden');
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        closeToast();
+      }, 5000);
+    }
+    
+    function closeToast() {
+      const toast = document.getElementById('toastContainer');
+      toast.classList.add('hidden');
+    }
   </script>
 </body>
 </html>

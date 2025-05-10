@@ -6,7 +6,7 @@ import os
 
 class DatabaseHelper:
     def __init__(self):
-        self.client = MongoClient('mongodb+srv://saikiransuguru:7eYEmWV5Nmzrn24m@cluster0.sbi4o.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/')
+        self.client = MongoClient('mongodb+srv://seethepallisantosh:helloworld2025@cluster0.94sk8uz.mongodb.net/colloseum?retryWrites=true&w=majority')
         self.db = self.client['face_recognition']
         self.users_collection = self.db['users']  # New collection for user data
         self.encodings_collection = self.db['face_encodings']
