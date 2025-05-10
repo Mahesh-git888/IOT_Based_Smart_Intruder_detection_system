@@ -27,7 +27,6 @@ def predict_faces():
         return "Unknown", None
 
     video_capture = cv2.VideoCapture(url)
-    # video_capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     print("[INFO] Starting face recognition. Press 'q' to quit.")
 

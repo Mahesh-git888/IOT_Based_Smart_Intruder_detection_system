@@ -10,46 +10,46 @@
     .user-list {
       margin: 20px;
       padding: 15px;
-      background-color: #fff;
+      background-color: #000; /* Changed from white to black */
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      color: #fff; /* Added for text contrast */
     }
 
-    .user-card {
-      padding: 15px;
-      margin-bottom: 10px;
+    .user-list table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background-color: #111; /* Slightly lighter than container */
+      color: #fff;
       border-radius: 5px;
-      background-color: #f5f5f5;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      overflow: hidden;
+    }
+    
+    .user-list th, 
+    .user-list td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+    
+    .user-list th {
+      background-color: #222;
+      font-weight: 600;
+    }
+    
+    .user-list tr:hover {
+      background-color: #222;
     }
 
-    .user-info {
-      flex: 1;
-    }
-
-    .user-actions button {
-      background-color: #4CAF50;
-      border: none;
-      color: white;
-      padding: 8px 16px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 14px;
-      margin: 4px 2px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-
+    /* Dialog enhancements */
     .dialog-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: rgba(0, 0, 0, 0.8); /* Darker overlay */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -58,49 +58,164 @@
     }
 
     .dialog-content {
-      background-color: white;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 80%;
-      max-height: 80%;
+      background-color: #111;
+      color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      height: 85vh;
+      max-width: 1200px;
       overflow-y: auto;
       position: relative;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+      border: 1px solid #333;
     }
 
     .dialog-close {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 24px;
+      top: 15px;
+      right: 15px;
+      font-size: 28px;
       cursor: pointer;
       background: none;
       border: none;
+      color: #fff;
+      transition: color 0.2s;
     }
 
+    .dialog-close:hover {
+      color: #ff5555;
+    }
+
+    #dialog-title {
+      text-align: center;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+      border-bottom: 1px solid #333;
+      font-size: 24px;
+      color: #4CAF50;
+    }
+
+    /* Image gallery enhancements */
     .image-gallery {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      grid-gap: 15px;
+      gap: 20px;
       margin-top: 20px;
+      width: 100%;
     }
 
     .image-item {
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      padding: 10px;
-      text-align: center;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #222;
+      transition: transform 0.2s, box-shadow 0.2s;
+      overflow: hidden;
+    }
+
+    .image-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
 
     .image-item img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 5px;
+      width: 180px;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .image-name {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #ddd;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: center;
     }
 
     .timestamp {
-      margin-top: 10px;
+      margin-top: 8px;
       font-size: 12px;
-      color: #666;
+      color: #888;
+      text-align: center;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #fff;
+      background-color: #222;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+
+    /* Better section headings in dialog */
+    .section-heading {
+      margin: 25px 0 15px 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #333;
+      color: #4CAF50;
+      font-size: 18px;
+    }
+
+    /* Enhanced visit history table */
+    #dialog-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      background-color: #222;
+      color: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    #dialog-content th,
+    #dialog-content td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+
+    #dialog-content th {
+      background-color: #333;
+      font-weight: 600;
+    }
+
+    #dialog-content tr:hover {
+      background-color: #2a2a2a;
+    }
+
+    /* Summary section for user dialog */
+    .user-summary {
+      display: flex;
+      background-color: #222;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      justify-content: space-around;
+    }
+
+    .summary-item {
+      text-align: center;
+    }
+
+    .summary-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4CAF50;
+    }
+
+    .summary-label {
+      color: #888;
+      margin-top: 5px;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -228,12 +343,56 @@
           historyContent.classList.remove("hidden");
           document.getElementById('toggleHistoryBtn').textContent = "Hide History";
           
-          // Focus on this specific user
+          // Display the user in a table
           const container = document.getElementById('user-list-container');
           container.innerHTML = '';
           
-          const userCard = createUserCard(history);
-          container.appendChild(userCard);
+          const table = document.createElement('table');
+          
+          // Add table header
+          const thead = document.createElement('thead');
+          const headerRow = document.createElement('tr');
+          
+          ['Name', 'Visit Count', 'Last Visit', 'Actions'].forEach(headerText => {
+            const th = document.createElement('th');
+            th.textContent = headerText;
+            headerRow.appendChild(th);
+          });
+          
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+          
+          // Create table body
+          const tbody = document.createElement('tbody');
+          const row = document.createElement('tr');
+          
+          // Name cell
+          const nameCell = document.createElement('td');
+          nameCell.textContent = history.name;
+          row.appendChild(nameCell);
+          
+          // Visit count cell
+          const visitCell = document.createElement('td');
+          visitCell.textContent = history.visit_count;
+          row.appendChild(visitCell);
+          
+          // Last visit cell
+          const lastVisitCell = document.createElement('td');
+          lastVisitCell.textContent = history.timestamps && history.timestamps.length > 0 ? 
+            new Date(history.timestamps[0]).toLocaleString() : 'N/A';
+          row.appendChild(lastVisitCell);
+          
+          // Actions cell
+          const actionsCell = document.createElement('td');
+          const viewButton = document.createElement('button');
+          viewButton.textContent = 'View Details';
+          viewButton.onclick = () => showUserDialog(history);
+          actionsCell.appendChild(viewButton);
+          row.appendChild(actionsCell);
+          
+          tbody.appendChild(row);
+          table.appendChild(tbody);
+          container.appendChild(table);
         }
       } catch (error) {
         console.error('Error fetching user history:', error);
@@ -346,29 +505,54 @@
       
       dialogTitle.textContent = `${user.name}'s History`;
       
+      // Create a summary section and visit history table
       let content = `
-        <p><strong>Total Visits:</strong> ${user.visit_count}</p>
-        <p><strong>Visit History:</strong></p>
-        <ul>
-          ${user.timestamps.map(ts => `<li>${new Date(ts).toLocaleString()}</li>`).join('')}
-        </ul>
+        <div class="user-summary">
+          <div class="summary-item">
+            <div class="summary-value">${user.visit_count}</div>
+            <div class="summary-label">Total Visits</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">${user.timestamps && user.timestamps.length > 0 ? 
+                new Date(user.timestamps[0]).toLocaleDateString() : 'N/A'}</div>
+            <div class="summary-label">Last Visit Date</div>
+          </div>
+        </div>
+        
+        <h3 class="section-heading">Visit Timeline</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Visit Date & Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${user.timestamps.map(ts => `<tr><td>${new Date(ts).toLocaleString()}</td></tr>`).join('')}
+          </tbody>
+        </table>
       `;
       
+      // Add the image gallery with consistent sizing and names below
       if (user.images && user.images.length > 0) {
-        content += '<h3>Images</h3><div class="image-gallery">';
+        content += `<h3 class="section-heading">Captured Images (${user.images.length})</h3>
+          <div class="image-gallery">`;
         
         user.images.forEach(img => {
+          // Extract just the filename without path
+          const filename = img.image_name.split('/').pop();
+          
           content += `
             <div class="image-item">
               <img src="/api/image/${img.image_name}" alt="${user.name}">
               <div class="timestamp">${new Date(img.timestamp).toLocaleString()}</div>
+              <div class="image-name">${filename}</div>
             </div>
           `;
         });
         
         content += '</div>';
       } else {
-        content += '<p>No images available</p>';
+        content += '<h3 class="section-heading">Images</h3><p>No images available</p>';
       }
       
       dialogContent.innerHTML = content;
@@ -395,10 +579,57 @@
             
             container.innerHTML = '';
             
-            data.data.forEach(user => {
-              const userCard = createUserCard(user);
-              container.appendChild(userCard);
+            // Create a table instead of user cards
+            const table = document.createElement('table');
+            
+            // Add table header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            ['Name', 'Visit Count', 'Last Visit', 'Actions'].forEach(headerText => {
+              const th = document.createElement('th');
+              th.textContent = headerText;
+              headerRow.appendChild(th);
             });
+            
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Create table body
+            const tbody = document.createElement('tbody');
+            
+            data.data.forEach(user => {
+              const row = document.createElement('tr');
+              
+              // Name cell
+              const nameCell = document.createElement('td');
+              nameCell.textContent = user.name;
+              row.appendChild(nameCell);
+              
+              // Visit count cell
+              const visitCell = document.createElement('td');
+              visitCell.textContent = user.visit_count;
+              row.appendChild(visitCell);
+              
+              // Last visit cell
+              const lastVisitCell = document.createElement('td');
+              lastVisitCell.textContent = user.timestamps && user.timestamps.length > 0 ? 
+                new Date(user.timestamps[0]).toLocaleString() : 'N/A';
+              row.appendChild(lastVisitCell);
+              
+              // Actions cell
+              const actionsCell = document.createElement('td');
+              const viewButton = document.createElement('button');
+              viewButton.textContent = 'View Details';
+              viewButton.onclick = () => showUserDialog(user);
+              actionsCell.appendChild(viewButton);
+              row.appendChild(actionsCell);
+              
+              tbody.appendChild(row);
+            });
+            
+            table.appendChild(tbody);
+            container.appendChild(table);
           } else {
             container.innerHTML = `<p class="error">Failed to load user data</p>`;
           }
@@ -407,33 +638,6 @@
           console.error('Error fetching users:', error);
           container.innerHTML = `<p class="error">Error connecting to server</p>`;
         });
-    }
-    
-    function createUserCard(user) {
-      const userCard = document.createElement('div');
-      userCard.className = 'user-card';
-      
-      const userInfo = document.createElement('div');
-      userInfo.className = 'user-info';
-      userInfo.innerHTML = `
-        <h3>${user.name}</h3>
-        <p>Visit Count: ${user.visit_count}</p>
-        <p>Last Visit: ${user.timestamps && user.timestamps.length > 0 ? 
-            new Date(user.timestamps[0]).toLocaleString() : 'N/A'}</p>
-      `;
-      
-      const userActions = document.createElement('div');
-      userActions.className = 'user-actions';
-      
-      const viewButton = document.createElement('button');
-      viewButton.textContent = 'View Details';
-      viewButton.onclick = () => showUserDialog(user);
-      
-      userActions.appendChild(viewButton);
-      userCard.appendChild(userInfo);
-      userCard.appendChild(userActions);
-      
-      return userCard;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
