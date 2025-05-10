@@ -127,7 +127,11 @@ def clear_data():
 @app.route('/api/user_history/<name>', methods=['GET'])
 def get_user_history(name):
     db_helper = DatabaseHelper()
-    history = db_helper.get_user_history(name)
+    
+    # Check if we're requesting all timestamps for dialog view
+    full_timestamps = request.args.get('full', 'false').lower() == 'true'
+    
+    history = db_helper.get_user_history(name, full_timestamps)
     if history:
         # Convert timestamps to string format for JSON serialization
         history['timestamps'] = [ts.strftime('%Y-%m-%d %H:%M:%S') 
@@ -140,7 +144,51 @@ def get_user_history(name):
         'status': 'error',
         'message': 'User not found'
     }), 404
-    
+
+def serialize_timestamp(ts):
+    if isinstance(ts, datetime.datetime): 
+        return ts.isoformat()
+    return ts
+
+
+@app.route('/api/all_users', methods=['GET'])
+def get_all_users():
+    try:
+        db_helper = DatabaseHelper()
+        users_data = db_helper.get_all_users()
+
+        formatted_users = []
+        for user in users_data or []:
+            formatted_users.append({
+                'name': user.get('name', 'N/A'),
+                'visit_count': user.get('visit_count', 0),
+                'timestamps': [serialize_timestamp(ts) for ts in user.get('timestamps', [])],
+                'images': [
+                    {
+                        'image_name': img.get('image_name'),
+                        'image_data': img.get('image_data'),
+                        'timestamp': serialize_timestamp(img.get('timestamp'))
+                    }
+                    for img in user.get('images', [])
+                ]
+            })
+
+        return jsonify({
+            'status': 'success',
+            'data': formatted_users
+        })
+
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/all_users')
+def redirect_all_users():
+    """Redirect the /all_users endpoint to the correct API endpoint /api/all_users"""
+    return redirect(url_for('get_all_users'))
+
 @app.route('/api/open_gate', methods=['POST'])
 def open_gate():
     return jsonify({

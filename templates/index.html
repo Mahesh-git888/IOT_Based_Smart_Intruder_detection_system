@@ -5,6 +5,104 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Face Recognition Portal</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    .user-list {
+      margin: 20px;
+      padding: 15px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .user-card {
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-actions button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 14px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      display: none;
+    }
+
+    .dialog-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 80%;
+      max-height: 80%;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .dialog-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 24px;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    .image-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-gap: 15px;
+      margin-top: 20px;
+    }
+
+    .image-item {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .image-item img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 5px;
+    }
+
+    .timestamp {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar">
@@ -28,7 +126,6 @@
 
     <div class="card">
       <h3>Register New Face</h3>
-      <!-- Remove any potential form action attribute completely -->
       <form id="registerFaceForm" onsubmit="registerFace(event)">
         <div class="form-group">
           <label for="faceName">Person's Name</label>
@@ -42,20 +139,22 @@
     <div class="card" id="userHistory">
       <h3>Visit History</h3>
       <button id="toggleHistoryBtn" onclick="toggleHistory()" class="btn btn-primary">View History</button>
-      <table id="historyTable" class="hidden">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Total Visits</th>
-            <th>Recent Visit (Timestamp)</th>
-          </tr>
-        </thead>
-        <tbody id="historyContent"></tbody>
-      </table>
+      <div id="historyContent" class="user-list hidden">
+        <div id="user-list-container">
+          <div class="loading">Loading user data...</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Add toast container -->
+  <div id="user-dialog" class="dialog-overlay">
+    <div class="dialog-content">
+      <button class="dialog-close" onclick="closeUserDialog()">&times;</button>
+      <h2 id="dialog-title">User Details</h2>
+      <div id="dialog-content"></div>
+    </div>
+  </div>
+
   <div id="toastContainer" class="toast-container hidden">
     <div class="toast-message">
       <span id="toastText"></span>
@@ -64,33 +163,7 @@
   </div>
 
   <script>
-    // Theme Toggle Functionality
-    const themeToggle = document.getElementById('themeToggle');
-    const themeIcon = document.getElementById('themeIcon');
-    
-    // Check for saved theme preference or default to light mode
-    if (localStorage.getItem('theme') === 'dark') {
-      document.body.classList.add('dark-theme');
-      themeIcon.textContent = '☀️';
-    } else {
-      themeIcon.textContent = '🌙';
-    }
-    
-
-    document.addEventListener("DOMContentLoaded", async () => {
-        try {
-          const response = await fetch("/api/protected", { method: "GET" });
-          if (response.status === 403) {
-            alert("Unauthorized! Redirecting to login page.");
-            window.location.href = "/login";
-          }
-        } catch (error) {
-          console.error("Error checking authentication:", error);
-          alert("Unauthorized! Redirecting to login page.");
-          window.location.href = "/login";
-        }
-      });
-      
+  
     async function detectFace() {
       document.getElementById("status").innerText = "Detecting face, please wait...";
       document.getElementById("result").innerHTML = "";
@@ -98,7 +171,7 @@
       try {
         const response = await fetch("/api/predict_face", {
           method: "POST",
-          credentials: "include", // Include cookies in the request
+          credentials: "include",
         });
 
         if (response.status === 403) {
@@ -149,18 +222,18 @@
         
         if (data.status === 'success') {
           const history = data.data;
-          const historyHtml = history.timestamps.map(ts => `
-            <tr>
-              <td>${history.name}</td>
-              <td>${history.visit_count}</td>
-              <td>${new Date(ts).toLocaleString()}</td>
-            </tr>
-          `).join('');
-          document.getElementById('historyContent').innerHTML = historyHtml;
           
-          // Show history table automatically
-          document.getElementById('historyTable').classList.remove("hidden");
+          // Show the history section
+          const historyContent = document.getElementById("historyContent");
+          historyContent.classList.remove("hidden");
           document.getElementById('toggleHistoryBtn').textContent = "Hide History";
+          
+          // Focus on this specific user
+          const container = document.getElementById('user-list-container');
+          container.innerHTML = '';
+          
+          const userCard = createUserCard(history);
+          container.appendChild(userCard);
         }
       } catch (error) {
         console.error('Error fetching user history:', error);
@@ -168,14 +241,15 @@
     }
 
     function toggleHistory() {
-      const historyTable = document.getElementById("historyTable");
+      const historyContent = document.getElementById("historyContent");
       const toggleButton = document.getElementById("toggleHistoryBtn");
 
-      if (historyTable.classList.contains("hidden")) {
-        historyTable.classList.remove("hidden");
+      if (historyContent.classList.contains("hidden")) {
+        historyContent.classList.remove("hidden");
         toggleButton.textContent = "Hide History";
+        loadUserHistory();
       } else {
-        historyTable.classList.add("hidden");
+        historyContent.classList.add("hidden");
         toggleButton.textContent = "View History";
       }
     }
@@ -198,11 +272,10 @@
 
     document.getElementById("logoutButton").addEventListener("click", async () => {
       try {
-        // Call the logout endpoint to clear the cookie
         const response = await fetch("/api/logout", { method: "POST", credentials: "include" });
         if (response.status === 200) {
           alert("You have been logged out.");
-          window.location.href = "/login"; // Redirect to the login page
+          window.location.href = "/login";
         } else {
           alert("Failed to log out. Please try again.");
         }
@@ -227,7 +300,6 @@
       statusArea.classList.remove('hidden');
       
       try {
-        // Make sure we're using the correct API endpoint
         const response = await fetch(`/api/register_face?name=${encodeURIComponent(name)}`, {
           method: 'GET'
         });
@@ -236,9 +308,7 @@
         
         if (response.ok) {
           showToast(`Success: ${data.message}`, 'success');
-          // Clear the input field
           document.getElementById('faceName').value = '';
-          // Hide the status area after success
           setTimeout(() => {
             statusArea.classList.add('hidden');
           }, 3000);
@@ -251,21 +321,14 @@
       }
     }
 
-    // Toast functions
     function showToast(message, type = 'info') {
       const toast = document.getElementById('toastContainer');
       const toastText = document.getElementById('toastText');
       
-      // Set message
       toastText.textContent = message;
-      
-      // Add appropriate class for styling
       toast.className = 'toast-container toast-' + type;
-      
-      // Show the toast
       toast.classList.remove('hidden');
       
-      // Auto-hide after 5 seconds
       setTimeout(() => {
         closeToast();
       }, 5000);
@@ -275,6 +338,108 @@
       const toast = document.getElementById('toastContainer');
       toast.classList.add('hidden');
     }
+
+    function showUserDialog(user) {
+      const dialog = document.getElementById('user-dialog');
+      const dialogTitle = document.getElementById('dialog-title');
+      const dialogContent = document.getElementById('dialog-content');
+      
+      dialogTitle.textContent = `${user.name}'s History`;
+      
+      let content = `
+        <p><strong>Total Visits:</strong> ${user.visit_count}</p>
+        <p><strong>Visit History:</strong></p>
+        <ul>
+          ${user.timestamps.map(ts => `<li>${new Date(ts).toLocaleString()}</li>`).join('')}
+        </ul>
+      `;
+      
+      if (user.images && user.images.length > 0) {
+        content += '<h3>Images</h3><div class="image-gallery">';
+        
+        user.images.forEach(img => {
+          content += `
+            <div class="image-item">
+              <img src="/api/image/${img.image_name}" alt="${user.name}">
+              <div class="timestamp">${new Date(img.timestamp).toLocaleString()}</div>
+            </div>
+          `;
+        });
+        
+        content += '</div>';
+      } else {
+        content += '<p>No images available</p>';
+      }
+      
+      dialogContent.innerHTML = content;
+      dialog.style.display = 'flex';
+    }
+
+    function closeUserDialog() {
+      const dialog = document.getElementById('user-dialog');
+      dialog.style.display = 'none';
+    }
+
+    function loadUserHistory() {
+      const container = document.getElementById('user-list-container');
+      container.innerHTML = '<div class="loading">Loading user data...</div>';
+      
+      fetch('/api/all_users')
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            if (!data.data || data.data.length === 0) {
+              container.innerHTML = '<p>No users found in the database.</p>';
+              return;
+            }
+            
+            container.innerHTML = '';
+            
+            data.data.forEach(user => {
+              const userCard = createUserCard(user);
+              container.appendChild(userCard);
+            });
+          } else {
+            container.innerHTML = `<p class="error">Failed to load user data</p>`;
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching users:', error);
+          container.innerHTML = `<p class="error">Error connecting to server</p>`;
+        });
+    }
+    
+    function createUserCard(user) {
+      const userCard = document.createElement('div');
+      userCard.className = 'user-card';
+      
+      const userInfo = document.createElement('div');
+      userInfo.className = 'user-info';
+      userInfo.innerHTML = `
+        <h3>${user.name}</h3>
+        <p>Visit Count: ${user.visit_count}</p>
+        <p>Last Visit: ${user.timestamps && user.timestamps.length > 0 ? 
+            new Date(user.timestamps[0]).toLocaleString() : 'N/A'}</p>
+      `;
+      
+      const userActions = document.createElement('div');
+      userActions.className = 'user-actions';
+      
+      const viewButton = document.createElement('button');
+      viewButton.textContent = 'View Details';
+      viewButton.onclick = () => showUserDialog(user);
+      
+      userActions.appendChild(viewButton);
+      userCard.appendChild(userInfo);
+      userCard.appendChild(userActions);
+      
+      return userCard;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleButton = document.getElementById("toggleHistoryBtn");
+      toggleButton.textContent = "View History";
+    });
   </script>
 </body>
 </html>

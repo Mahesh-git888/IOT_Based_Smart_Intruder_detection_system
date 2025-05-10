@@ -95,3 +95,31 @@ class DatabaseHelper:
         """Clear all data from MongoDB only"""
         self.users_collection.delete_many({})
         self.encodings_collection.delete_many({})
+        
+    def get_all_users(self):
+        """
+        Retrieves all user data from the 'users' collection, including:
+        - name
+        - visit count
+        - all timestamps
+        - all images with metadata
+
+        Returns:
+            list: A list of user dictionaries.
+        """
+        try:
+            users_cursor = self.users_collection.find()
+            result = []
+
+            for user in users_cursor:
+                result.append({
+                    'name': user.get('name', 'N/A'),
+                    'visit_count': len(user.get('timestamps', [])),
+                    'timestamps': user.get('timestamps', []),
+                    'images': user.get('images', [])
+                })
+
+            return result
+        except Exception as e:
+            print(f"Error getting all users: {str(e)}")
+            return None
